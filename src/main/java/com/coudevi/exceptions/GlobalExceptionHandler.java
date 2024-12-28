@@ -1,5 +1,7 @@
 package com.coudevi.exceptions;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -27,5 +29,16 @@ public class GlobalExceptionHandler {
         body.put("error", ex.getReason());
         body.put("message", ex.getMessage());
         return ResponseEntity.status(ex.getStatusCode()).body(body);
+    }
+    // Manejo de errores de clave primaria duplicada y restricciones de base de datos
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "Violación de Integridad de Datos");
+        response.put("message", "El recurso ya existe o hay una restricción que se está violando.");
+        response.put("details", ex.getRootCause().getMessage()); // Información adicional del error (opcional)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 }
